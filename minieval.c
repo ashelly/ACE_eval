@@ -122,7 +122,7 @@ else if(e&&o){t=6;v=o/2;k=(i=e&e-1)?i:e;}
   ((i will be 0 for cases below here))
  */
 //  else if(i=t){for(i=(h[v&7]&63)/v;i-->5;)k&=k-1;v=k;} //k^v has 0 bits, i does not matter
-  else if(i=t){while(C-->4)k&=k-1;v=k;} //k^v has 0 bits, i does not matter
+  else if(i=t)while(C-->4)v=k&=k-1; //k^v has 0 bits, i does not matter
 /* three of a kind:
 	two sets are a full house, caught above. so if there is any bit left in 'odds',
 	it is a set. v=o/2 shifts the value bit into the right place

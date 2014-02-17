@@ -13,7 +13,6 @@ typedef int64_t LARGE_INTEGER;
 typedef struct timespec sysTime_t;
 
 #include "ace_eval.h"
-#define HANDSIZE 5 //Evaluator stores complete hand in space for 5 Cards
 
 #define MS_PER_SEC 1000.0f
 #define LOTS  10000000 //1e6
@@ -58,7 +57,7 @@ double platformSysTimeToMs(sysTime_t timeIn) {
 }
 
 //Eval LOTS of random hands
-Card hands[LOTS][HANDSIZE]={0};
+Card hands[LOTS][ACEHAND]={0};
 
 
 int main(int argc, char*argv[])
@@ -86,7 +85,7 @@ int main(int argc, char*argv[])
 			Shuffle(Deck);
 			cardsLeft=52;
 		}
-		memset(hands[i],0,sizeof(Card)*HANDSIZE);
+		memset(hands[i],0,sizeof(Card)*ACEHAND);
 		--cardsLeft;
 		ACE_addcard(hands[i],Deck[cardsLeft]);
 		--cardsLeft;
