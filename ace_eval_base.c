@@ -18,11 +18,23 @@
        };
 
 */
-
-/* some shorteners:
- */
-#define L(n)for(i=0;i<n;i++)
-#define U unsigned 
+#include <stdint.h>
+#include "ace_eval.h"
+/*
+    compressor: turn 26 bit-pairs into 13 bits
+*/
+Card C,i,X; 
+//#define c(a)for(X=a,i=C=0;X;X/=4}C|=(X&1)<<i++;
+Card compress(Card a){
+  int i=0;
+  Card out=0;
+  for (i;a;i++){
+	 out|=(a&1)<<i;
+	 a/=4;
+  }
+  return out/8;
+}
+	 
 
 /* Add a card to the hand with the `A` macro: 
    The hand is stored as an array of 5 ints. The low 3 bits are used to select a suit,
@@ -35,10 +47,9 @@
 
 /* a few globals
  */
-U C,i,X; 
 
 /* The evaluator function:*/
-U E(U h[]){ 
+Card E(Card h[]){ 
   /*variables:
 	 a: the sum of all suits. counts the ranks in paralell. 
        But there are only 2 bits used to store each rank, so 4 of a kind will overflow. 
@@ -59,24 +70,45 @@ U E(U h[]){
      v: value - the cards that determine the hand value. (eg: pair aces vs pair kings)
      k: kicker - will hold the tiebreak card(s) (eg: KKA21 vs KKQ21)
   */            /* *h */
-  U e=0x55555540,k=h[3],a=*h+h[1]+h[2]+h[4]-(k&-16L),o=2*e&a,t=0,v;e&=a;
+  Card count=h[0]+h[1]+h[2]+h[4]-(h[3]&-16L);
+  Card evens=0x55555540&count;
+  Card odds =0xAAAAAA80&count;
+  Card result = 0;
+  Card value;
+  Card kicker =h[3];
+  Card temp;
+
 
 /* Quad detector: the value `v=e&o/2` will be non-zero only if a rank has both 
    the even and odd bit set, meaning its count-1 is 3.
    The while loop clears all except the top bit of the remaining to find the kicker `k`.  
 	Type is stored in `t`
  */
-if(v=e&o/2){t=7;k^=v;while(i=k&k-1)k=i;}
+  if(value=evens&odds/2){
+	 result=7;
+	 kicker=h[3]^value;
+	 while(temp=kicker&kicker-1)
+		kicker=temp;
+  }
 
 /* Full House detector:  
 	The first line catches 2 sets (odds counter has 2 bits set).
-	 It separates the bits into high set, in `v` and the pair in `k`
+	 It separates the bits into high set, in `value` and the pair in `k`
    The the second line catches a set plus one or two pairs. 
      It clears one bit from the pairs field if needed when setting `k`
      (since AAAKKQQ ranks the same as AAAKKQJ)
 */
-else if(v=o&o-1){t=6;v/=2;k=o/2^v;} 
-else if(e&&o){t=6;v=o/2;k=(i=e&e-1)?i:e;} 
+  else if(value=odds&odds-1){
+	 result=6;
+	 value/=2;
+	 kicker=(odds/2)^value;
+  } 
+  else if (evens&&odds) {
+	 result=6;
+	 value=odds/2;
+	 temp = evens&evens-1;
+	 kicker= (temp)?temp:evens;
+  } 
 
 /*  All the other hands fall here.  
     `h[3]` is in `k`, it will be used to detect straights.
@@ -92,9 +124,16 @@ else if(e&&o){t=6;v=o/2;k=(i=e&e-1)?i:e;}
 		straight flush will.
   */
 
-
-	L(4) if((C=((a=h[(1<<i)&7])>>i)&7)>4){k=a;t=5;break;}
-	
+	for (i=0;i<4;i++){
+	  int idx  = (1<<i)&7;
+	  count = h[idx]>>i;
+	  count &= 7;
+	  if(count>=5){
+		 kicker=h[idx];
+		 result=5;
+		 break;
+	  }
+	}
 	  //   printf("#%d %08x %08x %d\n",C,k,h[X&7],X);
 	  
 
@@ -104,51 +143,73 @@ else if(e&&o){t=6;v=o/2;k=(i=e&e-1)?i:e;}
    clear the suit bits from a, then copy down the high bit (ace) 
 	   to the ones position so we can catch 5-high straights.
 */
-  k&=-64;v=k|k>>26&16; 
-/* The next line zeros v unless there are at least 5 cards in a row.  
+  kicker&=-64;
+  value=kicker|(kicker>>26)&16; 
+  
+/* The next line zeros value unless there are at least 5 cards in a row.  
    `t` will be 4 for straights, 9 for straight flushes.
-    For a 6 or 7 card straight, there will be multiple consecutive bits set in v: 
-	    `v&=~(v/4)` clears all but the highest. 
+    For a 6 or 7 card straight, there will be multiple consecutive bits set in value: 
+	    `value&=~(value/4)` clears all but the highest. 
 */
-  L(4)v&=v*4;if(v){t+=4;k=v&=~(v/4);}  //k^v has 0 bits, i does not matter
+  for (i=0;i<4;i++){
+	 value&=value*4;
+  }
+  if(value){
+	 result+=4;
+	 value&=~(value/4);
+	 kicker=value;
+  }
+  //k^value has 0 bits, i does not matter
 /* finish up the flush processing: 't' is only set for flush, 
-   store the high 5 cards in `k` and `v`, 
+   store the high 5 cards in `k` and `value`, 
 	by clearing low bit until the card count `C` is 5.
    (done after straight detection to avoid calling AK98765 in same suit a plain flush.)
   ((i will be 0 for cases below here))
  */
 //  else if(i=t){for(i=(h[v&7]&63)/v;i-->5;)k&=k-1;v=k;} //k^v has 0 bits, i does not matter
-  else if(i=t)while((v=k)&&C-->5)k&=k-1; //k^v has 0 bits, i does not matter
+  else if (i=result){
+	 while(count-->5){
+		kicker&=kicker-1; //k^v has 0 bits, i does not matter
+	 }
+	 value = kicker;
+  }
 /* three of a kind:
 	two sets are a full house, caught above. so if there is any bit left in 'odds',
 	it is a set. v=o/2 shifts the value bit into the right place
- */
-  else if(v=o/2)t=3;     //v has 1 bit, k^v has 4 bits, i is 0 so we can clear 2  
+*/
+  else if(value=odds/2) {
+	 result=3;     //v has 1 bit, k^v has 4 bits, i is 0 so we can clear 2  
+  }
 /* Pairs:  a bit set in evens is a pair.  we might have 1,2, or 3 of them.
    `o` will be set if there is more than one, `i` will be set if there are 3. 
     `v` is set to the top 1 or 2 cards. 't' is 1 or 2.
 
  */
-  else if (e){o=e&e-1;v=(i=o&o-1)?o:e;t=1+(o>0);}   
+  else if (evens){
+	 odds=evens&evens-1;
+	 i=odds&odds-1;
+	 value=(temp)?odds:evens;
+	 result=1+(odds>0);
+  }   
 
 /* for all hands except 4 of a kind and full house,
-   we have left the primary cards which determine the hand's type in 'v'
+   we have left the primary cards which determine the hand's type in 'value'
    and `a` holds all the cards (except a == v for flushes and straights)
 	set k to the kickers by findig all in a not in v (a^v)
 	then clear the extra 2. (or 1 if i is non zero b/c there was a 3rd pair).
  */
-  printf("#%08x %08x %08x %d\n",v,k,k^v,i);
-k^=v;k&=k-1;k&=k-(i==0);} 
-/*
-    compressor: turn 26 bit-pairs into 13 bits
-*/
-#define c(a)for(X=a,i=C=0;X;X/=4)C|=(X&1)<<i++;
-
+//  printf("#%08x %08x %08x %d\n",value,k,k^value,i);
+  kicker^=value;
+  kicker&=kicker-1;
+  kicker&=kicker-(i==0);
+ } 
 /*
   build the final result.  
   4 bits for the type 0..9, 13 bits for the value cards, 13 for the kicker.
  */
-c(v);v=C/8;c(k); 
-return t<<28|v<<13|C/8;} 
+  value=compress(value);
+  C=compress(kicker); 
+  return result<<28|value<<13|C;
+} 
 
 

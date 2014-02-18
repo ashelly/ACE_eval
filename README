@@ -1,0 +1,93 @@
+** ACE_Eval **
+* AShelly's Card Evaluator *
+
+
+-What's this? It is indeed Yet Another Poker Evaluator. Specifically it is a 7-card hand evaluator implemented in roughly 600 bytes of source code.  It is not the tiniest evaluator, and certainly not the fastest, but the goal is to make it the fastest tiny ones, or maybe the tiniest fast one.  **(I couldn't bear to name it YAPE. Maybe I should have gone for ANTByTE: ANTByTE's Not Two-By-Two).
+
+-How To Use It?.  In 4 simple steps:
+1) Initialize the deck with 52 calls to `Card ACE_makecard(int n);`
+   This creates the internal card representation
+2) Create some empty hands with `Card hand[ACEHAND]={0};`
+3) Deal 7 cards to the hand with `void ACE_addcard(Card* hand, Card card);`
+4) Find the hand value with `Card ACE_evaluate(Card* hand);`
+
+--What is the hand value? 
+	  A 32-bit value with the following layout:
+	  `RRRR..AKQJT98765432akqjt98765432'
+      4-bit Rank, 4 spares, 13 Value Card bits,13 Kickers bits.
+It is arranged so that 
+A) if V(a) > V(b) then hand a beats hand b.  Equal hands have equal values.
+B) You can quickly extract both the rank and the cards that make up the hand.
+
+Ranks:
+  0:"High Card"
+  1:"One Pair
+  2""Two Pair",
+  3:"Three of a Kind",
+  4:"Straight",
+  5:"Flush",
+  6:"Full House",
+  7:"Four of a Kind",
+  8:"unused",
+  9:"Straight Flush"  
+
+(There is no rank for "Royal Flush", since that's just a straight flush with the ace bit set.)
+
+ace_decode.c contains source to turn it back into a human-readable result
+
+-What makes it different?
+  It's very small, and fairly fast.
+
+  It started out as a fairly simple evaluator in Ruby, but morphed into C at some point.  I came up with a reasonably efficient card-encoding scheme, and was happy with the results.  But then, like so many before me, I came upon the "The Great Poker Hand Evaluator Roundup" on Coding the Wheel[link], and it's writeup of the two-by-two evaluator[link].  So my quest for a super-fast evaluator was over before it started.   But I was bothered by the 123MB lookup table it needed, so I changed my focus to writing a fast but tiny evaluator instead.
+
+Eventually I turned it into a code-golf entry. [SO-link] I recently dug it up and started making some tweaks. In it's tiniest form the evaluator function by itself is roughly 600 bytes of source code.
+
+There are several supporting files to make it do something:
+
+A) The smallest useful example is ace_golfeval.c, which adds code to support human-readable string input, and brings the total size to 747 bytes. 
+Compiling on linux with `gcc -s -Os golfeval.c` creates a 6Kb executable, which you can run as:
+
+>  echo 3C 4C 5C 6H 8D 3D 8H | ./a.out
+ 20084010
+>  echo 3C 4C 5C 6H 8D 3D 8H | ./a.out | ./ace_decode
+ 2 Pair, Eights and Threes with a Six
+
+
+B) The code for the original SO challenge is down to 894 bytes.  This takes a list of 9 cards representing a 2-player game, and returns win/lose/draw statistics.
+
+C) You can verify the results with accuracy_test.c which runs through all possible 7 card hands.
+
+D) Test the speed with speed_test.c
+   ace_minieval clocks in at 23.5 Million hands /second.
+
+
+
+
+How does it work?
+Cards are stored in a 32 bit word which has the following (implied) structure:
+
+    struct card{
+       unsigned num_A:2;
+       unsigned num_K:2;
+       unsigned num_Q:2;
+       //....
+       unsigned num_2:2;
+       unsigned spare:2;
+       unsigned spade:1;
+       unsigned heart:1;
+       unsigned diamond:1;
+       unsigned club:1;
+       };
+
+or 0a0k0...
+
+A hand is 5 32 bit words, one for each suit, and one which has a bit for each card value
+*/
+
+
+
+-Optimization
+ace_minieval clocks in at 23.5 Million hands /second.
+ace_eval_base.c ungolfs it.
+
+So w
