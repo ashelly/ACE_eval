@@ -1,6 +1,6 @@
 ** ACE_Eval **
-* AShelly's Card Evaluator *
-
+* ACE Card Evaluator *
+*(or maybe AShelly's Card Evaluator)*
 
 -What's this? It is indeed Yet Another Poker Evaluator*. Specifically it is a 7-card hand evaluator implemented in under 600 bytes of source code.  It is not the tiniest evaluator, and certainly not the fastest, but the goal is to make it among the fastest tiny ones, or maybe the tiniest fast one.  **(I couldn't bear to name it YAPE.)
 
@@ -41,7 +41,7 @@ ace_decode.c contains example source to turn it back into a human-readable resul
 
   It started out as a fairly simple evaluator in Ruby, but morphed into C at some point.  I came up with a reasonably efficient card-encoding scheme, and was happy with the results.  But then, like so many before me, I came upon the ["The Great Poker Hand Evaluator Roundup"](http://www.codingthewheel.com/archives/poker-hand-evaluator-roundup/) on Coding the Wheel, and saw its description of the [Two-plus-Two evaluator](http://archives1.twoplustwo.com/showflat.php?Cat=0&Number=8513906&page=0&fpart=1&vc=1).  So my quest for a super-fast evaluator was over before it really got started.   But I was bothered by the 123MB lookup table need by two-plus-two, so I changed my focus to writing a fast but tiny evaluator instead.
 
-Eventually I turned it into a [code-golf entry](SO-link). I recently dug it up and started making some tweaks. In it's tiniest form the evaluator function by itself is now **577** bytes of source code (ace_eval_golf.c).
+Eventually I turned it into a [StackOverflow code-golf entry](http://stackoverflow.com/a/3392025/10396). I recently dug it up and started making some tweaks. In it's tiniest form the evaluator function by itself is now **577** bytes of source code (ace_eval_golf.c).
 
 There are several supporting files that make it into an actual program:
 
@@ -55,7 +55,7 @@ Compiling on linux with `gcc -s -Os ace_eval_golf.c` creates a 6Kb executable, w
  2 Pair, Eights and Threes with a Six
 
 
-B) The code for the original StackOverflow challenge is down to 894 bytes.  This takes a list of 9 cards representing a 2-player game, and returns win/lose/draw statistics. (so_handcomp.c)
+B) The code for the original StackOverflow challenge is down to **894** bytes.  This takes a list of 9 cards representing a 2-player game, and returns win/lose/draw statistics. (so_handcomp.c)
 
 C) You can verify the results with accuracy_test.c which runs through all possible 7 card hands.
 
