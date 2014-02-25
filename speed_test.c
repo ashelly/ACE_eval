@@ -15,7 +15,7 @@ typedef struct timespec sysTime_t;
 #include "ace_eval.h"
 
 #define MS_PER_SEC 1000.0f
-#define LOTS  10000000 //1e6
+#define LOTS  100000000 //1e6
 
 
 struct timespec timings,endtimings;
@@ -110,7 +110,7 @@ int main(int argc, char*argv[])
 
 	for (i=0;i<LOTS;i++)
 	{
-	  Card r = ACE_minieval( hands[i] );
+	  Card r = ACE_evaluate( hands[i] );
 	  handTypeSum[ACE_rank(r)]++;
 	  count++;
 	}

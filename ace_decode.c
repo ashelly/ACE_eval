@@ -22,20 +22,15 @@ int main(){
 
   do {
 	 c=fgets(buffer,128,stdin); //read a whole line
-	 //c=gets(buffer);//,128,stdin); //read a whole line
 	 printf("%s\n",c);
   } while (*c=='#'); //skip comments
 
   rank=*c++; //extract rank char
 
-	 printf("%c\n",rank);
   sscanf(c,"%x",&hand); //convert remainder to hex
-	 printf("%d\n",hand);
 
   for (bit=26;bit-->0;) { //extract bits downto 0
-	 printf("%d %d\n",bit,hand);
 	 if (hand & (1<<bit)) {
-		printf("found %d ->[%d]\n",bit%13,n);
 		cards[n++]=(bit)%13;  
 	 }
   }

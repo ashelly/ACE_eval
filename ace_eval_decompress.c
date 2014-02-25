@@ -25,16 +25,37 @@
 */
 Card C,i,X; 
 //#define c(a)for(X=a,i=C=0;X;X/=4}C|=(X&1)<<i++;
+#ifdef DECOMPRESS1
 Card compress(Card a){
-  int i=0;
+  //?  a=(a>>6)|a>>21;
+  //?out=V[a&255]+V[(a>>8)&255];
   Card out=0;
-  for (i;a;i++){
-	 out|=(a&1)<<i;
-	 a/=4;
-  }
-  return out/8;
+  a>>=6; //dump low bits
+  out|=a&0x1;          
+  out|=(a&0x4)>>1;    
+  out|=(a&0x10)>>2;   
+  out|=(a&0x40)>>3;  
+  out|=(a&0x100)>>4;
+  out|=(a&0x400)>>5;
+  out|=(a&0x1000)>>6;
+  out|=(a&0x4000)>>7;
+  out|=(a&0x10000)>>8;
+  out|=(a&0x40000)>>9;
+  out|=(a&0x100000)>>10;
+  out|=(a&0x400000)>>11;
+  out|=(a&0x1000000)>>12;
+  out|=(a&0x4000000)>>13;
+  return out;
 }
-	 
+#else
+Card compress(Card a){
+  a=(a|(a>>1))&0x33333333;
+  a=(a|(a>>2))&0x0f0f0f0f;
+  a=(a|(a>>4))&0x00ff00ff;
+  a=(a|(a>>8))&0x0000ffff;
+  return a>>3;
+}
+#endif
 
 /* Add a card to the hand with the `A` macro: 
    The hand is stored as an array of 5 ints. The low 3 bits are used to select a suit,
@@ -85,10 +106,10 @@ Card E(Card h[]){
 	Type is stored in `t`
  */
   if(value=evens&odds/2){
-	 result=7;
 	 kicker=h[3]^value;
 	 while(temp=kicker&kicker-1)
 		kicker=temp;
+	 return 7<<28|compress(value)<<13|compress(kicker);
   }
 
 /* Full House detector:  
@@ -99,15 +120,17 @@ Card E(Card h[]){
      (since AAAKKQQ ranks the same as AAAKKQJ)
 */
   else if(value=odds&odds-1){
-	 result=6;
 	 value/=2;
 	 kicker=(odds/2)^value;
+	 return 6<<28|compress(value)<<13|compress(kicker);
+	 
   } 
   else if (evens&&odds) {
 	 result=6;
 	 value=odds/2;
 	 temp = evens&evens-1;
 	 kicker= (temp)?temp:evens;
+	 return 6<<28|compress(value)<<13|compress(kicker);
   } 
 
 /*  All the other hands fall here.  
@@ -124,7 +147,12 @@ Card E(Card h[]){
 		straight flush will.
   */
 
-	for (i=0;i<4;i++){
+	if ((count=(h[0]>>3)&7)>4) { kicker=h[0]; result=5;} 
+	else if ((count=h[1]&7)>4) { kicker=h[1]; result=5;} 
+	else if ((count=(h[2]>>1)&7)>4) { kicker=h[2]; result=5;} 
+	else if ((count=(h[4]>>2)&7)>4) { kicker=h[4]; result=5;} 
+
+	/*	for (i=0;i<4;i++){
 	  int idx  = (1<<i)&7;
 	  count = h[idx]>>i;
 	  count &= 7;
@@ -134,6 +162,7 @@ Card E(Card h[]){
 		 break;
 	  }
 	}
+	*/
 	  //   printf("#%d %08x %08x %d\n",C,k,h[X&7],X);
 	  
 
@@ -151,34 +180,39 @@ Card E(Card h[]){
     For a 6 or 7 card straight, there will be multiple consecutive bits set in value: 
 	    `value&=~(value/4)` clears all but the highest. 
 */
-  for (i=0;i<4;i++){
-	 value&=value*4;
-  }
+  value&=value*4;
+  value&=value*4;
+  value&=value*4;
+  value&=value*4;
   if(value){
 	 result+=4;
 	 value&=~(value/4);
-	 kicker=value;
+	 return result<<28|compress(value)<<13;
   }
   //k^value has 0 bits, i does not matter
-/* finish up the flush processing: 't' is only set for flush, 
+/* finish up the pure flush processing: 't' is only set for flush, 
    store the high 5 cards in `k` and `value`, 
 	by clearing low bit until the card count `C` is 5.
    (done after straight detection to avoid calling AK98765 in same suit a plain flush.)
   ((i will be 0 for cases below here))
  */
 //  else if(i=t){for(i=(h[v&7]&63)/v;i-->5;)k&=k-1;v=k;} //k^v has 0 bits, i does not matter
-  else if (i=result){
+  else if (result){
 	 while(count-->5){
 		kicker&=kicker-1; //k^v has 0 bits, i does not matter
 	 }
-	 value = kicker;
+	 return result<<28|compress(kicker)<<13; //|0
   }
 /* three of a kind:
 	two sets are a full house, caught above. so if there is any bit left in 'odds',
 	it is a set. v=o/2 shifts the value bit into the right place
 */
   else if(value=odds/2) {
-	 result=3;     //v has 1 bit, k^v has 4 bits, i is 0 so we can clear 2  
+	 result=3;     //v has 1 bit, k^v has 4 bits, i is 0 so we can clear 2 
+	 kicker^=value;
+	 kicker&=kicker-1;
+	 kicker&=kicker-1;
+	 return 3<<28|compress(value)<<13|compress(kicker);
   }
 /* Pairs:  a bit set in evens is a pair.  we might have 1,2, or 3 of them.
    `o` will be set if there is more than one, `i` will be set if there are 3. 
@@ -186,12 +220,19 @@ Card E(Card h[]){
 
  */
   else if (evens){
-	 odds=evens&evens-1;
-	 i=odds&odds-1;
-	 value=(i)?odds:evens;
-	 result=1+(odds>0);
-  }   
-
+	 temp=evens&evens-1;
+    if (temp&temp-1){
+		kicker^=temp;
+		kicker&=kicker-1;
+		return 2<<28|compress(temp)<<13|compress(kicker);
+	 }
+	 else{
+		kicker^=evens;
+		kicker&=kicker-1;
+		kicker&=kicker-1;
+		return 1+(temp>0)<<28|compress(evens)<<13|compress(kicker);
+	 }   
+  }
 /* for all hands except 4 of a kind and full house,
    we have left the primary cards which determine the hand's type in 'value'
    and `a` holds all the cards (except a == v for flushes and straights)
@@ -199,17 +240,15 @@ Card E(Card h[]){
 	then clear the extra 2. (or 1 if i is non zero b/c there was a 3rd pair).
  */
 //  printf("#%08x %08x %08x %d\n",value,k,k^value,i);
-  kicker^=value;
-  kicker&=kicker-1;
-  kicker&=kicker-(i==0);
- } 
+ }
+ 
 /*
-  build the final result.  
+  build the final result. for high card
   4 bits for the type 0..9, 13 bits for the value cards, 13 for the kicker.
  */
-  value=compress(value);
-  C=compress(kicker); 
-  return result<<28|value<<13|C;
-} 
+  kicker&=kicker-1;
+  kicker&=kicker-1;
+  return 0|0<<13|compress(kicker);
+}
 
 
