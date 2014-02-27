@@ -23,6 +23,7 @@
 /*
     compressor: turn 26 bit-pairs into 13 bits
 */
+//#define DECOMPRESS1
 Card C,i,X; 
 //#define c(a)for(X=a,i=C=0;X;X/=4}C|=(X&1)<<i++;
 #ifdef DECOMPRESS1

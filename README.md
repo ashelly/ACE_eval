@@ -1,36 +1,42 @@
-** ACE_Eval **
-* ACE Card Evaluator *
+ACE_eval
+========
+ACE Card Evaluator
 *(or maybe AShelly's Card Evaluator)*
+-------------------- 
 
--What's this? It is indeed Yet Another Poker Evaluator*. Specifically it is a 7-card hand evaluator implemented in under 600 bytes of source code.  It is not the tiniest evaluator, and certainly not the fastest, but the goal is to make it among the fastest tiny ones, or maybe the tiniest fast one.  **(I couldn't bear to name it YAPE.)
 
--How To Use It?.  In 4 simple steps:
-1) Initialize the deck with 52 calls to `Card ACE_makecard(int n);` 
+### What's this?
+It is indeed Yet Another Poker Evaluator*. Specifically it is a 7-card hand evaluator implemented in under 600 bytes of source code.  It is not the tiniest evaluator, and certainly not the fastest, but the goal is to make it among the fastest tiny ones, or maybe the tiniest fast one.  **(I couldn't bear to name it YAPE.)
+
+### How To Use It?.
+  In 4 simple steps:
+
+1. Initialize the deck with 52 calls to `Card ACE_makecard(int n);` 
 	This creates the internal card representation
-2) Create an empty hands with `Card hand[ACEHAND]={0};`
-3) Deal 7 cards to the hand with 7 calls to `void ACE_addcard(Card* hand, Card card);`
-4) Find the hand value with `V = ACE_evaluate(Card* hand);`
+2. Create an empty hands with `Card hand[ACEHAND]={0};`
+3. Deal 7 cards to the hand with 7 calls to `void ACE_addcard(Card* hand, Card card);`
+4. Find the hand value with `V = ACE_evaluate(Card* hand);`
 
---What is the hand value? 
+## What is the hand value? 
 	  A 32-bit value with the following layout:
-	  `RRRR..AKQJT98765432akqjt98765432'
+	  `RRRR..AKQJT98765432akqjt98765432`
       4-bit Rank, 2 spares, 13 Value Card bits, 13 Kicker bits.
 
 It is arranged so that 
   A) if V(a) > V(b) then hand a beats hand b.  Equal hands have equal values.
   B) You can quickly extract both the rank and the cards that make up the hand.
 
-Ranks:
-  0:"High Card"
-  1:"One Pair
-  2""Two Pair",
-  3:"Three of a Kind",
-  4:"Straight",
-  5:"Flush",
-  6:"Full House",
-  7:"Four of a Kind",
-  8:"unused",
-  9:"Straight Flush"  
+    Ranks:
+       0:"High Card"
+       1:"One Pair
+       2""Two Pair",
+       3:"Three of a Kind",
+       4:"Straight",
+       5:"Flush",
+       6:"Full House",
+       7:"Four of a Kind",
+       8:"unused",
+       9:"Straight Flush"  
 
 (There is no rank for "Royal Flush", since that's just a straight flush with the ace bit set.)
 
