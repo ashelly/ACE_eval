@@ -1,15 +1,14 @@
-# plan to write about optimization testing here.  
 
 ### Optimization 
 
 The golfed evaluator `ace_eval_golf.c` takes up only 575 bytes of source code, by using many ugly tricks.  But how does it do on speed?  `speed_test.c` creates 100 million random hands, then times how long to evaluate them. 
 
 On my current machine *(Intel® Core™ i5-3320M CPU @ 2.60GHz × 4 running Ubuntu 12.04 with gcc
-v4.6.3-Target:x86_64-linux-gnu)* it runs about 23Mhps (Million hands /second).  Not bad. That means it can run through all 133 million possible hands in under 6 seconds.   But we should be able to do better. 
+v4.6.3-Target:x86_64-linux-gnu)* it runs about **23Mhps** (Million hands /second).  Not bad. That means it can run through all 133 million possible hands in under 6 seconds.   But we should be able to do better. 
 
-First, let's ungolf the names so they are human-readable, unpack the macros introduced soley for compression, and introduce a few temporary variables in place of ones reused in the interest of space.  That's `ace_eval_base.c`.  All further optimizations will work from here.   Is it any faster?  23.9Mhps.  A 3% speedup, just by giving the compiler a little more wiggle room.
+First, let's ungolf the names so they are human-readable, unpack the macros introduced soley for compression, and introduce a few temporary variables in place of ones reused in the interest of space.  That's `ace_eval_base.c`.  All further optimizations will work from here.   Is it any faster?  **23.9Mhps**.  A 3% speedup, just by giving the compiler a little more wiggle room.
 
-Next, let's go to an age-old trick: unrolling the loops.  `ace_eval_unroll.c` unrolls the loops in the flush detector and the straight detector. It also returns directly after determining the hand type, instead of saving ther result,value cards,and kickers to the end.   This gives only a minor bump, up to 25.1Mhps.  Still it's a good idea.
+Next, let's go to an age-old trick: unrolling the loops.  `ace_eval_unroll.c` unrolls the loops in the flush detector and the straight detector. It also returns directly after determining the hand type, instead of saving ther result,value cards,and kickers to the end.   This gives only a minor bump, up to **25.1Mhps**.  Still it's a good idea.
 
 The flush detection was one of the hardest part to golf efficiently, and it still seems inefficient.   Let's take a closer look at how it works.
 
@@ -32,7 +31,7 @@ Unrolling removed the shift and mask required to index each hand, but we are sti
 
 Maybe we can add the suit bits together the same way we do with the value bits, and look them up at once.  But it's easy to find a counterexample there too:  Consider 5 Clubs, 1 Diamond, 1 Heart.  That's `b101 + b1<<1 + b1<<2 = b1011.` But 3 Clubs and 4 Diamonds is `b11 + b100<<1 = b1011` One hand is a flush, the other not, so this won't work.
 
-So we'll definitely need to look at each of the four suit words separately. Can we at least get rid of the shifting and one 6-bit lookup table for all the words?  Nope. 6 Clubs looks the same as 3 Diamonds:  0b110.   So the shifting stays.  But aren't comparisons expensive.  Maybe we can use a lookup to avoid all those `else if`s, and just directly calculate which suit has a flush:
+So we'll definitely need to look at each of the four suit words separately. Can we at least get rid of the shifting and use one 6-bit lookup table for all the words?  Nope. 6 Clubs looks the same as 3 Diamonds:  0b110.   So the shifting stays.  But aren't comparisons expensive.  Maybe we can use a lookup to avoid all those `else if`s, and just directly calculate which suit has a flush:
 
     static const int nc[8]={0,0,0,0,0,1,1,1};
 	i=0;
@@ -42,7 +41,7 @@ So we'll definitely need to look at each of the four suit words separately. Can 
 	i+=nc[(h[1]   )&7]*1;
 	if (i) { kicker=h[i&7]; count=(kicker/i)&7; result=5;}  
 
-And the time:  24.4Mhps.  Oops.  We replaced SHIFT,AND,COMPARE,ASSIGN,BRANCH with SHIFT,AND,LOOKUP,MULTIPLY,ADD. and it wasn't any faster.  Where to go from here?  Maybe where we should have started:  profiling. 
+And the time:  **24.4Mhps**.  Oops.  We replaced SHIFT,AND,COMPARE,ASSIGN,BRANCH with SHIFT,AND,LOOKUP,MULTIPLY,ADD. and it wasn't any faster.  Where to go from here?  Maybe where we should have started:  profiling. 
 
 Recent versions of Linux have a great, easy-to-use profiling tool built right in.  `perf record ./time_unroll; perf report` gives an easy to use view of the hotspots.  Right away the 'compress' function jumps out.   The compiler has inlined it, but all the hotspots are in instances of that procedure. This is the function used to compress the 26 bits used to represent the card down to 13.  Let's see what we can do to improve it.  Here it is in `ace_eval_unroll.c`:
 
@@ -78,7 +77,7 @@ Oops. That doesn't look unrolled. How about this instead:
 		return out;
 	 }
 
-And the new speed is... 52.0Mhps!  A 2x speedup.   The program now spends more time in `random()` shuffling decks then it does in evaluating the hands it deals.   But the compiler no longer inlines `compress`, and it is still taking up about 40% of the evaluation time.  How do we make it smaller and faster?   Let's ask [StackOverflow](	http://stackoverflow.com/q/3137266/10396).  [Matthew Slattery](https://stackoverflow.com/users/242889/matthew-slattery) came up with this version:
+And the new speed is... **52.0Mhps!**  A 2x speedup.   The program now spends more time in `random()` shuffling decks then it does in evaluating the hands it deals.   But the compiler no longer inlines `compress`, and it is still taking up about 40% of the evaluation time.  How do we make it smaller and faster?   Let's ask [StackOverflow](	http://stackoverflow.com/q/3137266/10396).  [Matthew Slattery](https://stackoverflow.com/users/242889/matthew-slattery) came up with this version:
 
 	 Card compress(Card a){ 
 		a=(a|(a>>1))&0x33333333;
@@ -88,18 +87,16 @@ And the new speed is... 52.0Mhps!  A 2x speedup.   The program now spends more t
 		return a>>3;
 	 }
 
-It works by doubling each bit, clearing every other pair of bits, then doubling the pairs and so on.   And the speedup:  72Mhps. More than 3x faster than the original.   The `compress` function is inlined again, and the `perf` profile is mostly flat.  The hotspots are concentrated around the first few lines, where it is adding the suits, and separating the even and odd bits.  This is not suprising, since every call goes through these lines, before being funneled into one or more specific cases based on the value.
+It works by doubling each bit, clearing every other pair of bits, then doubling the pairs and so on.   And the speedup:  **72Mhps**. More than 3x faster than the original.   The `compress` function is inlined again, and the `perf` profile is mostly flat.  The hotspots are concentrated around the first few lines, where it is adding the suits, and separating the even and odd bits.  This is not suprising, since every call goes through these lines, before being funneled into one or more specific cases based on the value.
 
-Before going on to more optimization, let's find out how this code stacks up to others.
-
- 
-
-
-golf            23.0
-
-
-base				 23.9
-unroll			 24.1
-flushtable 		 26.8
+Results so far:
+```
+golf       	23.0
+base	  	23.9
+unroll		24.1
+flushtable 	26.8
 decompress      50.9
 decompress2     71.8
+```
+
+Before going on to more optimization, let's find out how this code stacks up to others.  **COMING SOON**
