@@ -1,14 +1,16 @@
 ACE_eval
-=========
+========
 
-ACE Card Evaluator
--------------------
+
+**ACE Card Evaluator**
+
 *(or maybe AShelly's Card Evaluator)*
--------------------- 
+
+
 
 
 ###What's this? 
-It is indeed Yet Another **Poker Evaluator**. Specifically it is a **7-card hand evaluator** implemented in **under 600 bytes** of source code.  It is not the tiniest evaluator, and certainly not the fastest, but the goal is to make it among the fastest tiny ones, or maybe the tiniest fast one.  
+It is indeed Yet Another **Poker Evaluator**. Specifically it is a **7-card hand evaluator** implemented in **under 600 bytes** of C source code.  It is not the tiniest evaluator, and certainly not the fastest, but the goal is to make it among the fastest tiny ones, or maybe the tiniest fast one.  
 
 ####How To Use It?.
 In 4 simple steps:
@@ -19,7 +21,7 @@ In 4 simple steps:
 3. Deal 7 cards to the hand with 7 calls to `void ACE_addcard(Card* hand, Card card);`
 4. Find the hand value with `V = ACE_evaluate(Card* hand);`
 
-##### What is the hand value? 
+- What is the hand value? 
 	  A 32-bit value with the following layout:  
 	  `RRRR..AKQJT98765432akqjt98765432`
           4-bit Rank, 2 spares, 13 Value Card bits, 13 Kicker bits.

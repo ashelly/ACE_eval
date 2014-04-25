@@ -134,10 +134,6 @@ Card E(Card h[]){
 		 break;
 	  }
 	}
-	  //   printf("#%d %08x %08x %d\n",C,k,h[X&7],X);
-	  
-
-	//   printf("#%d %08x %d %d\n",C,k,X,i);
 
 /* Now the straight detector. 
    clear the suit bits from a, then copy down the high bit (ace) 
@@ -159,14 +155,12 @@ Card E(Card h[]){
 	 value&=~(value/4);
 	 kicker=value;
   }
-  //k^value has 0 bits, i does not matter
 /* finish up the flush processing: 't' is only set for flush, 
    store the high 5 cards in `k` and `value`, 
 	by clearing low bit until the card count `C` is 5.
    (done after straight detection to avoid calling AK98765 in same suit a plain flush.)
   ((i will be 0 for cases below here))
  */
-//  else if(i=t){for(i=(h[v&7]&63)/v;i-->5;)k&=k-1;v=k;} //k^v has 0 bits, i does not matter
   else if (i=result){
 	 while(count-->5){
 		kicker&=kicker-1; //k^v has 0 bits, i does not matter
@@ -198,7 +192,6 @@ Card E(Card h[]){
 	set k to the kickers by findig all in a not in v (a^v)
 	then clear the extra 2. (or 1 if i is non zero b/c there was a 3rd pair).
  */
-//  printf("#%08x %08x %08x %d\n",value,k,k^value,i);
   kicker^=value;
   kicker&=kicker-1;
   kicker&=kicker-(i==0);
