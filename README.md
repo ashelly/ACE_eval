@@ -45,18 +45,18 @@ Ranks:
     9:"Straight Flush"  
     (There is no rank for "Royal Flush", since that's just a straight flush with the ace bit set.)
 
-`ace_decode.c` contains example source to turn it back into a human-readable result
+[`ace_decode.c`](ace_decode.c) contains example source to turn it back into a human-readable result
 
 ####What makes it different?
   It's very small, and fairly fast.
 
   It started out as a fairly simple evaluator in Ruby, but morphed into C at some point.  I came up with a reasonably efficient card-encoding scheme, and was happy with the results.  But then, like so many before me, I came upon the ["The Great Poker Hand Evaluator Roundup"](http://www.codingthewheel.com/archives/poker-hand-evaluator-roundup/) on Coding the Wheel, and saw its description of the [Two-plus-Two evaluator](http://archives1.twoplustwo.com/showflat.php?Cat=0&Number=8513906&page=0&fpart=1&vc=1).  So my quest for a super-fast evaluator was over before it really got started.   But I was bothered by the 123MB lookup table need by two-plus-two, so I changed my focus to writing a fast but tiny evaluator instead.
 
-Eventually I turned it into a [StackOverflow code-golf entry](http://stackoverflow.com/a/3392025/10396). I recently dug it up and started making some tweaks. In it's tiniest form the evaluator function by itself is now **577** bytes of source code (`ace_eval_golf.c`).
+Eventually I turned it into a [StackOverflow code-golf entry](http://stackoverflow.com/a/3392025/10396). I recently dug it up and started making some tweaks. In it's tiniest form the evaluator function by itself is now **577** bytes of source code ([`ace_eval_golf.c`](ace_eval_golf.c)).
 
 There are several supporting files that make it into an actual program:
 
-A) The smallest useful example is `ace_microeval.c`, which adds code to support human-readable string input, and brings the total size to **737** bytes. 
+A) The smallest useful example is [`ace_microeval.c`](ace_microeval.c), which adds code to support human-readable string input, and brings the total size to **737** bytes. 
 
 Compiling on linux with `gcc -s -Os ace_microeval.c` creates a 6Kb executable, which you can run with:
 
@@ -66,16 +66,16 @@ Compiling on linux with `gcc -s -Os ace_microeval.c` creates a 6Kb executable, w
      2 Pair, Eights and Threes with a Six
 
 
-B) The code for the original StackOverflow challenge is down to **894** bytes.  This takes a list of 9 cards representing a 2-player game, and returns win/lose/draw statistics. (`so_handcomp.c`)
+B) The code for the original StackOverflow challenge is down to **894** bytes.  This takes a list of 9 cards representing a 2-player game, and returns win/lose/draw statistics. ([`so_handcomp.c`](so_handcomp.c))
 
-C) You can verify the results with `accuracy_test.c` which runs through all possible 7 card hands.
+C) You can verify the results with [`accuracy_test.c`](accuracy_test.c) which runs through all possible 7 card hands.
 
-D) Test the speed with speed_test.c
+D) Test the speed with [`speed_test.c`](speed_test.c). 
    `ace_eval_golf.c` clocks in at 23.5 Million hands /second.
-   See OPTIMIZATION for versions that triple the speed. 
-   Fastest so far: `ace_eval_decompress.c` at **72Mhps**.
+   See [OPTIMIZATION.md](OPTIMIZATION.md) for versions that triple the speed. 
+   Fastest so far: [`ace_eval_decompress.c`](ace_eval_best.c) at **72Mhps**.
 
-
+E) [`ace_golf_5.c`](ace_golf_5.c) is a version which only handles 5 card hands, reducing the size down to **424** characters.   (Plus 160 for the input handling)
 
 ### So how does it work?
 Cards are stored in a 32 bit word which has the following (implied) structure:
