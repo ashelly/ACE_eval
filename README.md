@@ -109,7 +109,7 @@ Straights are indicated by having 5 set bits in a row. So shift the hand one pla
 That's a fairly small number of operations to get the rank of the hand.  Once the rank is determined, the final value is found by selecting the five cards that make up the hand, and separating them into rank cards and kickers, and compressiing both parts down to 13 bits.  In general the even or odd words already have the rank cards. The remaining cards are easily determined by XOR'ing those the hand. Taking the correct number of bits from there gives the kicker. 
 
 
-64bit version:
+####64bit version:
 Hand is 5 uint64_t values. Logic is the same. Hand represented like:
 0000 000a 000k 000q 000j 000t 0009 0008 0007 0006 0005 0004 0003 0002 Ext. MMMM
 Ext. - copy 'A' value in straight detection.
