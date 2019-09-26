@@ -12,7 +12,7 @@ cimport numpy as np
 import numpy as np
 from scipy.special import comb
 
-cdef extern from "ace_eval.h":
+cdef extern from "ace_eval_py.h":
     Card ACE_makecard(Card i)
     Card ACE_evaluate(Card* h)
     void ACE_addcard(Card* h, Card c)
