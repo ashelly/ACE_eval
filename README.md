@@ -9,10 +9,10 @@ ACE_eval
 
 
 
-###What's this? 
+### What's this? 
 It is indeed Yet Another **Poker Evaluator**. Specifically it is a **7-card hand evaluator** implemented in **under 600 bytes** of C source code.  It is not the tiniest evaluator, and certainly not the fastest, but the goal is to make it among the fastest tiny ones, or maybe the tiniest fast one.  
 
-####How To Use It?.
+### How To Use It?.
 In 4 simple steps:
 
 1. Initialize the deck with 52 calls to `Card ACE_makecard(int n);` 
@@ -47,7 +47,7 @@ Ranks:
 
 [`ace_decode.c`](ace_decode.c) contains example source to turn it back into a human-readable result
 
-####What makes it different?
+### What makes it different?
   It's very small, and fairly fast.
 
   It started out as a fairly simple evaluator in Ruby, but morphed into C at some point.  I came up with a reasonably efficient card-encoding scheme, and was happy with the results.  But then, like so many before me, I came upon the ["The Great Poker Hand Evaluator Roundup"](http://www.codingthewheel.com/archives/poker-hand-evaluator-roundup/) on Coding the Wheel, and saw its description of the [Two-plus-Two evaluator](http://archives1.twoplustwo.com/showflat.php?Cat=0&Number=8513906&page=0&fpart=1&vc=1).  So my quest for a super-fast evaluator was over before it really got started.   But I was bothered by the 123MB lookup table need by two-plus-two, so I changed my focus to writing a fast but tiny evaluator instead.
